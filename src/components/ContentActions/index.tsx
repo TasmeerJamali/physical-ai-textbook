@@ -6,15 +6,16 @@ interface ContentActionsProps {
   apiUrl?: string;
 }
 
-export default function ContentActions({ 
-  chapterId, 
-  apiUrl = 'http://localhost:8000' 
+export default function ContentActions({
+  chapterId,
+  apiUrl = 'http://localhost:8000'
 }: ContentActionsProps): JSX.Element {
   const [isPersonalizing, setIsPersonalizing] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [showUrdu, setShowUrdu] = useState(false);
   const [personalizedContent, setPersonalizedContent] = useState<string | null>(null);
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
+  const [originalContent, setOriginalContent] = useState<string | null>(null);
 
   const getPageContent = (): string => {
     const article = document.querySelector('article');
@@ -25,6 +26,9 @@ export default function ContentActions({
     setIsPersonalizing(true);
     try {
       const content = getPageContent();
+      if (!originalContent) {
+        setOriginalContent(content);
+      }
       const response = await fetch(`${apiUrl}/api/personalize/adapt`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -37,7 +41,7 @@ export default function ContentActions({
       });
       const data = await response.json();
       setPersonalizedContent(data.personalized_content);
-      
+
       // Update the page content
       const article = document.querySelector('article');
       if (article) {
@@ -51,13 +55,18 @@ export default function ContentActions({
   };
 
   const handleTranslate = async () => {
-    if (showUrdu && translatedContent) {
+    if (showUrdu) {
       // Toggle back to English
       const article = document.querySelector('article');
-      if (article && personalizedContent) {
-        article.innerHTML = personalizedContent;
-      } else {
-        window.location.reload();
+      if (article) {
+        if (personalizedContent) {
+          article.innerHTML = personalizedContent;
+        } else if (originalContent) {
+          article.innerHTML = originalContent;
+        } else {
+          window.location.reload();
+        }
+        article.dir = 'ltr'; // Back to left-to-right for English
       }
       setShowUrdu(false);
       return;
@@ -66,6 +75,9 @@ export default function ContentActions({
     setIsTranslating(true);
     try {
       const content = getPageContent();
+      if (!originalContent) {
+        setOriginalContent(content);
+      }
       const response = await fetch(`${apiUrl}/api/personalize/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -77,7 +89,7 @@ export default function ContentActions({
       });
       const data = await response.json();
       setTranslatedContent(data.translated_content);
-      
+
       // Update the page content
       const article = document.querySelector('article');
       if (article) {
@@ -94,23 +106,32 @@ export default function ContentActions({
 
   return (
     <div className={styles.container}>
-      <button 
-        className={styles.button}
-        onClick={handlePersonalize}
-        disabled={isPersonalizing}
-        title="Personalize content based on your experience level"
-      >
-        {isPersonalizing ? '⏳' : '✨'} Personalize
-      </button>
-      
-      <button 
-        className={`${styles.button} ${showUrdu ? styles.active : ''}`}
-        onClick={handleTranslate}
-        disabled={isTranslating}
-        title="Translate to Urdu"
-      >
-        {isTranslating ? '⏳' : '🌐'} {showUrdu ? 'English' : 'اردو'}
-      </button>
+      {/* Loading message */}
+      {(isPersonalizing || isTranslating) && (
+        <div className={styles.loadingMessage}>
+          ⏳ {isPersonalizing ? 'Personalizing' : 'Translating'}... This may take 20-30 seconds
+        </div>
+      )}
+
+      <div className={styles.buttonGroup}>
+        <button
+          className={styles.button}
+          onClick={handlePersonalize}
+          disabled={isPersonalizing || isTranslating}
+          title="Personalize content based on your experience level"
+        >
+          {isPersonalizing ? '⏳' : '✨'} Personalize
+        </button>
+
+        <button
+          className={`${styles.button} ${showUrdu ? styles.activeUrdu : ''}`}
+          onClick={handleTranslate}
+          disabled={isTranslating || isPersonalizing}
+          title={showUrdu ? "Switch back to English" : "Translate to Urdu"}
+        >
+          {isTranslating ? '⏳' : showUrdu ? '🔙' : '🌐'} {showUrdu ? 'Back to English' : 'اردو'}
+        </button>
+      </div>
     </div>
   );
 }
