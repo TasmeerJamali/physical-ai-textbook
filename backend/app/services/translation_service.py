@@ -1,16 +1,18 @@
 """Translation service for Urdu and other languages."""
 import re
-from openai import OpenAI
+import google.generativeai as genai
 
 from app.config import get_settings
 
 
 class TranslationService:
     """Service for translating textbook content while preserving code."""
-    
+
     def __init__(self):
         self.settings = get_settings()
-        self.openai = OpenAI(api_key=self.settings.openai_api_key)
+        # Use Gemini for translation (frees up OpenAI quota for RAG)
+        genai.configure(api_key=self.settings.gemini_api_key)
+        self.model = genai.GenerativeModel('gemini-2.0-flash')
     
     def extract_code_blocks(self, content: str) -> tuple[str, list[str]]:
         """Extract code blocks and replace with placeholders."""
@@ -76,17 +78,11 @@ Rules:
 
 Translate naturally, not word-by-word."""
 
-        response = self.openai.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": text_to_translate}
-            ],
-            temperature=0.3,
-            max_tokens=3000
-        )
-        
-        translated = response.choices[0].message.content
+        # Use Gemini for translation
+        prompt = f"{system_prompt}\n\nTranslate this content:\n\n{text_to_translate}"
+        response = self.model.generate_content(prompt)
+
+        translated = response.text
         
         # Restore code blocks
         if preserve_code:

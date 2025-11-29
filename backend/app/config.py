@@ -14,8 +14,11 @@ class Settings(BaseSettings):
     qdrant_api_key: str | None = None
     qdrant_collection: str = "textbook_chunks"
     
-    # OpenAI
+    # OpenAI (for RAG Chatbot)
     openai_api_key: str = ""
+
+    # Google Gemini (for Translation & Personalization)
+    gemini_api_key: str = ""
     
     # JWT Authentication
     jwt_secret: str = "change-me-in-production"

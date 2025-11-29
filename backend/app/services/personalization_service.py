@@ -1,15 +1,17 @@
 """Personalization service for adapting content to user level."""
-from openai import OpenAI
+import google.generativeai as genai
 
 from app.config import get_settings
 
 
 class PersonalizationService:
     """Service for personalizing textbook content based on user background."""
-    
+
     def __init__(self):
         self.settings = get_settings()
-        self.openai = OpenAI(api_key=self.settings.openai_api_key)
+        # Use Gemini for personalization (frees up OpenAI quota for RAG)
+        genai.configure(api_key=self.settings.gemini_api_key)
+        self.model = genai.GenerativeModel('gemini-2.0-flash')
     
     async def adapt_content(
         self,
@@ -72,20 +74,14 @@ Adapt this content for an advanced user:
 Preserve all code blocks exactly. Only adapt the explanatory text.
 Return the adapted content in the same markdown format."""
 
-        response = self.openai.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Adapt this content:\n\n{content}"}
-            ],
-            temperature=0.7,
-            max_tokens=2000
-        )
-        
+        # Use Gemini for content adaptation
+        prompt = f"{system_prompt}\n\nAdapt this content:\n\n{content}"
+        response = self.model.generate_content(prompt)
+
         adaptations.append(f"Adapted for {user_level} level")
-        
+
         return {
-            "content": response.choices[0].message.content,
+            "content": response.text,
             "adaptations": adaptations
         }
 
