@@ -9,6 +9,50 @@
   border: 1px solid var(--ifm-color-emphasis-200);
 }
 
+.levelSelector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.levelLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ifm-font-color-secondary);
+}
+
+.levelButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.levelButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: var(--ifm-background-color);
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ifm-font-color-base);
+  transition: all 0.2s ease;
+}
+
+.levelButton:hover:not(:disabled) {
+  border-color: var(--ifm-color-primary);
+  color: var(--ifm-color-primary);
+}
+
+.levelButtonActive {
+  background: var(--ifm-color-primary);
+  color: white;
+  border-color: var(--ifm-color-primary);
+}
+
 .buttonGroup {
   display: flex;
   gap: 12px;
@@ -83,6 +127,19 @@
   box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
 }
 
+/* Active Personalized button - shows when viewing personalized content */
+.button.activePersonalized {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+}
+
+.button.activePersonalized:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
 /* Mobile responsive */
 @media (max-width: 480px) {
   .buttonGroup {
@@ -91,6 +148,21 @@
 
   .button {
     width: 100%;
+    justify-content: center;
+  }
+
+  .levelSelector {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .levelButtons {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .levelButton {
+    flex: 1;
     justify-content: center;
   }
 }

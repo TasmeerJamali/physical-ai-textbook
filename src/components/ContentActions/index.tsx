@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './styles.module.css';
 
 interface ContentActionsProps {
@@ -16,6 +16,22 @@ export default function ContentActions({
   const [personalizedContent, setPersonalizedContent] = useState<string | null>(null);
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
   const [originalContent, setOriginalContent] = useState<string | null>(null);
+  const [userLevel, setUserLevel] = useState<string>('intermediate');
+  const [isPersonalized, setIsPersonalized] = useState(false);
+
+  // Load user level from localStorage on mount
+  useEffect(() => {
+    const savedLevel = localStorage.getItem('userLevel');
+    if (savedLevel) {
+      setUserLevel(savedLevel);
+    }
+  }, []);
+
+  // Save user level to localStorage when changed
+  const handleLevelChange = (level: string) => {
+    setUserLevel(level);
+    localStorage.setItem('userLevel', level);
+  };
 
   const getPageContent = (): string => {
     const article = document.querySelector('article');
@@ -23,6 +39,17 @@ export default function ContentActions({
   };
 
   const handlePersonalize = async () => {
+    // If already personalized, restore original
+    if (isPersonalized) {
+      const article = document.querySelector('article');
+      if (article && originalContent) {
+        article.innerHTML = originalContent;
+      }
+      setIsPersonalized(false);
+      setPersonalizedContent(null);
+      return;
+    }
+
     setIsPersonalizing(true);
     try {
       const content = getPageContent();
@@ -35,12 +62,13 @@ export default function ContentActions({
         body: JSON.stringify({
           content,
           chapter_id: chapterId,
-          user_level: localStorage.getItem('userLevel') || 'intermediate',
+          user_level: userLevel,
           user_background: JSON.parse(localStorage.getItem('userBackground') || '{}')
         })
       });
       const data = await response.json();
       setPersonalizedContent(data.personalized_content);
+      setIsPersonalized(true);
 
       // Update the page content
       const article = document.querySelector('article');
@@ -113,14 +141,31 @@ export default function ContentActions({
         </div>
       )}
 
+      {/* Level selector for personalization */}
+      <div className={styles.levelSelector}>
+        <span className={styles.levelLabel}>Your Level:</span>
+        <div className={styles.levelButtons}>
+          {['beginner', 'intermediate', 'advanced'].map((level) => (
+            <button
+              key={level}
+              className={`${styles.levelButton} ${userLevel === level ? styles.levelButtonActive : ''}`}
+              onClick={() => handleLevelChange(level)}
+              disabled={isPersonalizing || isTranslating}
+            >
+              {level === 'beginner' ? '🌱' : level === 'intermediate' ? '🌿' : '🌳'} {level.charAt(0).toUpperCase() + level.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className={styles.buttonGroup}>
         <button
-          className={styles.button}
+          className={`${styles.button} ${isPersonalized ? styles.activePersonalized : ''}`}
           onClick={handlePersonalize}
           disabled={isPersonalizing || isTranslating}
-          title="Personalize content based on your experience level"
+          title={isPersonalized ? "Restore original content" : "Personalize content based on your experience level"}
         >
-          {isPersonalizing ? '⏳' : '✨'} Personalize
+          {isPersonalizing ? '⏳' : isPersonalized ? '🔙' : '✨'} {isPersonalized ? 'Back to Original' : 'Personalize'}
         </button>
 
         <button
