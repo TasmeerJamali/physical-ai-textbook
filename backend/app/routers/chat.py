@@ -22,6 +22,8 @@ class ChatResponse(BaseModel):
     answer: str
     sources: list[dict] | None = None
     confidence: float = 1.0
+    skill_used: str | None = None
+    subagent_used: str | None = None
 
 
 @router.post("/ask", response_model=ChatResponse)
@@ -50,7 +52,9 @@ async def ask_question(request: ChatRequest):
         return ChatResponse(
             answer=result["answer"],
             sources=result.get("sources"),
-            confidence=result.get("confidence", 1.0)
+            confidence=result.get("confidence", 1.0),
+            skill_used=result.get("skill_used"),
+            subagent_used=result.get("subagent_used")
         )
     except Exception as e:
         error_msg = str(e)

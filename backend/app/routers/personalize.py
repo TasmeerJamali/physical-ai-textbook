@@ -23,6 +23,8 @@ class PersonalizeResponse(BaseModel):
     """Response with personalized content."""
     personalized_content: str
     adaptations_made: list[str]
+    skill_used: str | None = None
+    subagent_used: str | None = None
 
 
 class TranslateRequest(BaseModel):
@@ -37,6 +39,7 @@ class TranslateResponse(BaseModel):
     translated_content: str
     source_language: str
     target_language: str
+    subagent_used: str | None = None
 
 
 @router.post("/adapt", response_model=PersonalizeResponse)
@@ -57,7 +60,9 @@ async def personalize_content(request: PersonalizeRequest):
         )
         return PersonalizeResponse(
             personalized_content=result["content"],
-            adaptations_made=result["adaptations"]
+            adaptations_made=result["adaptations"],
+            skill_used=result.get("skill_used"),
+            subagent_used=result.get("subagent_used")
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -80,7 +85,8 @@ async def translate_content(request: TranslateRequest):
         return TranslateResponse(
             translated_content=result["translated"],
             source_language="en",
-            target_language=request.target_language
+            target_language=request.target_language,
+            subagent_used=result.get("subagent_used")
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

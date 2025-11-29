@@ -1,18 +1,28 @@
-"""RAG Service using OpenAI Agents SDK and Qdrant."""
+"""RAG Service using OpenAI Agents SDK and Qdrant.
+
+Integrates with Reusable Intelligence (Skills & Subagents) for enhanced responses.
+"""
 from openai import OpenAI
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 
 from app.config import get_settings
+from app.intelligence.skills import SkillContext, RoboticsExplainerSkill
+from app.intelligence.subagents import QAAgent
 
 
 class RAGService:
-    """Retrieval Augmented Generation service for textbook Q&A."""
-    
+    """Retrieval Augmented Generation service for textbook Q&A.
+
+    Uses Reusable Intelligence:
+    - QAAgent subagent for orchestrating responses
+    - RoboticsExplainerSkill for adapting explanations
+    """
+
     def __init__(self):
         self.settings = get_settings()
         self.openai = OpenAI(api_key=self.settings.openai_api_key)
-        
+
         # Initialize Qdrant client
         if self.settings.qdrant_api_key:
             self.qdrant = QdrantClient(
@@ -21,6 +31,9 @@ class RAGService:
             )
         else:
             self.qdrant = QdrantClient(url=self.settings.qdrant_url)
+
+        # Initialize Reusable Intelligence
+        self.explainer_skill = RoboticsExplainerSkill()
     
     async def get_embedding(self, text: str) -> list[float]:
         """Get embedding vector for text using OpenAI."""
@@ -57,38 +70,51 @@ class RAGService:
         self,
         question: str,
         context: str = "",
-        user_level: str = "intermediate"
+        user_level: str = "intermediate",
+        programming_languages: list[str] = None,
+        robotics_experience: bool = False
     ) -> dict:
-        """Answer a question using RAG."""
+        """Answer a question using RAG with Reusable Intelligence.
+
+        Uses:
+        - QAAgent subagent for orchestration
+        - RoboticsExplainerSkill for level-appropriate explanations
+        """
         # Search for relevant content
         similar_docs = await self.search_similar(question)
-        
+
         # Build context from retrieved documents
         rag_context = "\n\n".join([
             f"[From {doc['chapter']}]: {doc['content']}"
             for doc in similar_docs
         ])
-        
-        # Adapt system prompt based on user level
-        level_instructions = {
-            "beginner": "Use simple language, analogies, and step-by-step explanations.",
-            "intermediate": "Balance technical accuracy with clear explanations.",
-            "advanced": "Be concise and focus on technical details and edge cases."
-        }
-        
-        system_prompt = f"""You are an expert robotics instructor for the Physical AI textbook.
-Answer questions about ROS 2, Gazebo, NVIDIA Isaac, and VLA models.
 
-User Level: {user_level}
-{level_instructions.get(user_level, level_instructions['intermediate'])}
+        # Create skill context from user profile
+        skill_context = SkillContext(
+            user_level=user_level,
+            programming_languages=programming_languages or [],
+            robotics_experience=robotics_experience
+        )
 
-Use the following context from the textbook to answer:
+        # Use QAAgent subagent for enhanced prompting
+        qa_agent = QAAgent(context=skill_context)
+
+        # Get level-specific adaptation from skill
+        level_adaptation = self.explainer_skill.get_level_adaptation(user_level)
+
+        system_prompt = f"""{qa_agent.system_prompt}
+
+## Level Adaptation
+{level_adaptation}
+
+## Retrieved Context from Textbook
 {rag_context}
 
-Additional context provided by user:
+## Additional User Context
 {context}
 
-If the answer isn't in the context, use your knowledge but mention it's general information."""
+If the answer isn't in the context, use your knowledge but mention it's general information.
+Always cite sources when using textbook content."""
 
         # Generate answer using OpenAI
         response = self.openai.chat.completions.create(
@@ -100,11 +126,13 @@ If the answer isn't in the context, use your knowledge but mention it's general 
             temperature=0.7,
             max_tokens=1000
         )
-        
+
         return {
             "answer": response.choices[0].message.content,
             "sources": similar_docs[:3] if similar_docs else None,
-            "confidence": similar_docs[0]["score"] if similar_docs else 0.5
+            "confidence": similar_docs[0]["score"] if similar_docs else 0.5,
+            "skill_used": "robotics-explainer",
+            "subagent_used": "qa-agent"
         }
     
     async def explain_text(self, text: str, user_level: str = "intermediate") -> str:
