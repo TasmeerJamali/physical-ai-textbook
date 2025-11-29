@@ -59,10 +59,17 @@ export default function ChatWidget({ apiUrl = 'http://localhost:8000' }: ChatWid
       const data = await response.json();
       const assistantMessage: Message = { role: 'assistant', content: data.answer };
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      const errorMessage: Message = { 
-        role: 'assistant', 
-        content: 'Sorry, I encountered an error. Please try again.' 
+    } catch (error: any) {
+      let errorText = 'Sorry, I encountered an error. Please try again.';
+
+      // Check for rate limit error
+      if (error?.message?.includes('429') || error?.message?.includes('rate')) {
+        errorText = '⏳ OpenAI rate limit reached. Please wait 1-2 minutes and try again. (Free tier limitation)';
+      }
+
+      const errorMessage: Message = {
+        role: 'assistant',
+        content: errorText
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {

@@ -53,7 +53,14 @@ async def ask_question(request: ChatRequest):
             confidence=result.get("confidence", 1.0)
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = str(e)
+        # Handle rate limit errors with friendly message
+        if "429" in error_msg or "rate_limit" in error_msg.lower():
+            raise HTTPException(
+                status_code=429,
+                detail="OpenAI rate limit reached. Please wait a moment and try again. Free tier has limited requests."
+            )
+        raise HTTPException(status_code=500, detail=error_msg)
 
 
 @router.post("/explain")
