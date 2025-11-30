@@ -44,17 +44,17 @@ export default function AuthModal({ apiUrl = 'http://localhost:8000' }: AuthModa
 
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup';
-      const body = isLogin 
+      const body = isLogin
         ? { email, password }
         : {
-            email,
-            password,
-            name,
-            experience_level: experienceLevel,
-            programming_languages: programmingLanguages,
-            robotics_experience: roboticsExperience,
-            learning_goals: learningGoals.split(',').map(g => g.trim()).filter(Boolean)
-          };
+          email,
+          password,
+          name,
+          experience_level: experienceLevel,
+          programming_languages: programmingLanguages,
+          robotics_experience: roboticsExperience,
+          learning_goals: learningGoals.split(',').map(g => g.trim()).filter(Boolean)
+        };
 
       const response = await fetch(`${apiUrl}${endpoint}`, {
         method: 'POST',
@@ -76,7 +76,7 @@ export default function AuthModal({ apiUrl = 'http://localhost:8000' }: AuthModa
 
       setUser(data.user);
       setIsOpen(false);
-      
+
       // Reset form
       setEmail('');
       setPassword('');
@@ -96,7 +96,7 @@ export default function AuthModal({ apiUrl = 'http://localhost:8000' }: AuthModa
   };
 
   const toggleLanguage = (lang: string) => {
-    setProgrammingLanguages(prev => 
+    setProgrammingLanguages(prev =>
       prev.includes(lang) ? prev.filter(l => l !== lang) : [...prev, lang]
     );
   };
@@ -121,11 +121,11 @@ export default function AuthModal({ apiUrl = 'http://localhost:8000' }: AuthModa
         <div className={styles.overlay} onClick={() => setIsOpen(false)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <button className={styles.closeBtn} onClick={() => setIsOpen(false)}>×</button>
-            
+
             <h2 className={styles.title}>{isLogin ? 'Welcome Back!' : 'Create Account'}</h2>
-            
+
             {error && <div className={styles.error}>{error}</div>}
-            
+
             <form onSubmit={handleSubmit} className={styles.form}>
               {!isLogin && (
                 <input
@@ -137,7 +137,7 @@ export default function AuthModal({ apiUrl = 'http://localhost:8000' }: AuthModa
                   className={styles.input}
                 />
               )}
-              
+
               <input
                 type="email"
                 placeholder="Email"
@@ -146,7 +146,7 @@ export default function AuthModal({ apiUrl = 'http://localhost:8000' }: AuthModa
                 required
                 className={styles.input}
               />
-              
+
               <input
                 type="password"
                 placeholder="Password (min 8 characters)"

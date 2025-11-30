@@ -16,7 +16,70 @@ export default function ChatWidget({ apiUrl = 'http://localhost:8000' }: ChatWid
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedText, setSelectedText] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Speech Recognition Setup
+  const recognitionRef = useRef<any>(null);
+  const synthRef = useRef<SpeechSynthesis | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Initialize Speech Synthesis
+      synthRef.current = window.speechSynthesis;
+
+      // Initialize Speech Recognition
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = false;
+        recognitionRef.current.lang = 'en-US';
+
+        recognitionRef.current.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setInput(transcript);
+          setIsListening(false);
+          // Auto-send after voice input
+          setTimeout(() => sendMessage(transcript), 500);
+        };
+
+        recognitionRef.current.onerror = (event: any) => {
+          console.error('Speech recognition error', event.error);
+          setIsListening(false);
+        };
+
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+        };
+      }
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+    } else {
+      recognitionRef.current?.start();
+      setIsListening(true);
+    }
+  };
+
+  const speakText = (text: string) => {
+    if (synthRef.current) {
+      if (isSpeaking) {
+        synthRef.current.cancel();
+        setIsSpeaking(false);
+        return;
+      }
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.onend = () => setIsSpeaking(false);
+      setIsSpeaking(true);
+      synthRef.current.speak(utterance);
+    }
+  };
 
   // Listen for text selection
   useEffect(() => {
@@ -45,6 +108,10 @@ export default function ChatWidget({ apiUrl = 'http://localhost:8000' }: ChatWid
     setIsLoading(true);
 
     try {
+      // Get user background for personalization
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const userLevel = localStorage.getItem('userLevel') || 'intermediate';
+
       const response = await fetch(`${apiUrl}/api/chat/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -52,13 +119,19 @@ export default function ChatWidget({ apiUrl = 'http://localhost:8000' }: ChatWid
           question,
           selected_text: selectedText || null,
           chapter_context: document.title,
-          user_level: 'intermediate'
+          user_level: userLevel,
+          programming_languages: user.programming_languages || [],
+          robotics_experience: user.robotics_experience || false,
+          learning_goals: user.learning_goals || []
         })
       });
 
       const data = await response.json();
       const assistantMessage: Message = { role: 'assistant', content: data.answer };
       setMessages(prev => [...prev, assistantMessage]);
+      
+      // Auto-speak the answer if it was a voice query (optional, but cool)
+      // speakText(data.answer); 
     } catch (error: any) {
       let errorText = 'Sorry, I encountered an error. Please try again.';
 
@@ -117,6 +190,15 @@ export default function ChatWidget({ apiUrl = 'http://localhost:8000' }: ChatWid
             {messages.map((msg, idx) => (
               <div key={idx} className={`${styles.message} ${styles[msg.role]}`}>
                 {msg.content}
+                {msg.role === 'assistant' && (
+                  <button 
+                    className={styles.speakButton} 
+                    onClick={() => speakText(msg.content)}
+                    title="Read aloud"
+                  >
+                    {isSpeaking && messages[messages.length-1] === msg ? '🔇' : '🔊'}
+                  </button>
+                )}
               </div>
             ))}
             {isLoading && (
@@ -128,12 +210,19 @@ export default function ChatWidget({ apiUrl = 'http://localhost:8000' }: ChatWid
           </div>
 
           <div className={styles.inputArea}>
+            <button 
+              className={`${styles.micButton} ${isListening ? styles.listening : ''}`}
+              onClick={toggleListening}
+              title="Speak your question"
+            >
+              {isListening ? '🛑' : '🎤'}
+            </button>
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && sendMessage(input)}
-              placeholder="Ask a question..."
+              placeholder={isListening ? "Listening..." : "Ask a question..."}
               disabled={isLoading}
             />
             <button onClick={() => sendMessage(input)} disabled={isLoading || !input.trim()}>
