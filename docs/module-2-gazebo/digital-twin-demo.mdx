@@ -1,0 +1,36 @@
+---
+sidebar_position: 3
+title: 🎮 Interactive Digital Twin
+---
+
+import RobotViewer from '@site/src/components/RobotViewer';
+
+# Interactive Digital Twin
+
+Welcome to the **Physical AI Lab**! 🧪
+
+Before we deploy code to a real robot, we must simulate it. This is called a **Digital Twin**.
+Below is a live, interactive 3D simulation of a 4-DOF (Degree of Freedom) robotic arm, running directly in your browser using **Forward Kinematics**.
+
+## 🕹️ Try It Yourself
+
+Use the sliders below to control the robot's joints. Notice how the movement of one joint affects the position of all subsequent links.
+
+<RobotViewer />
+
+## 🧠 How It Works
+
+This simulation demonstrates **Forward Kinematics**: calculating the position of the "End Effector" (the gripper) based on the angles of the joints.
+
+In **Module 1**, we learned the math behind this. In **Module 2**, we use Gazebo to simulate physics (gravity, collisions). Here, we use a lightweight web renderer to visualize the geometry.
+
+### The Kinematic Chain
+
+1.  **Base (J1)**: Rotates the entire arm around the vertical axis (Yaw).
+2.  **Shoulder (J2)**: Lifts the main arm up and down (Pitch).
+3.  **Elbow (J3)**: Extends or retracts the forearm (Pitch).
+4.  **Wrist (J4)**: Rotates the gripper (Roll).
+
+## 🚀 Next Steps
+
+Now that you've played with the Digital Twin, let's learn how to control it with code using **ROS 2** in the next chapter!

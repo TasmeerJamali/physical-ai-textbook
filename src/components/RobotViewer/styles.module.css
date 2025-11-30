@@ -1,0 +1,65 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 2rem 0;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.canvasContainer {
+    height: 400px;
+    background: linear-gradient(to bottom, #f5f6fa, #dfe6e9);
+    cursor: grab;
+}
+
+.canvasContainer:active {
+    cursor: grabbing;
+}
+
+.controls {
+    padding: 20px;
+    background: white;
+    border-top: 1px solid #eee;
+}
+
+.controls h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    color: #2d3436;
+}
+
+.controlGroup {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 15px;
+}
+
+.controlGroup label {
+    width: 140px;
+    font-weight: 600;
+    color: #636e72;
+}
+
+.controlGroup input {
+    flex: 1;
+    cursor: pointer;
+}
+
+.controlGroup span {
+    width: 60px;
+    text-align: right;
+    font-family: monospace;
+    color: #0984e3;
+}
+
+.info {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: #b2bec3;
+    text-align: center;
+}
