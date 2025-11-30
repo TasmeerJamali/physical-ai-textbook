@@ -43,6 +43,10 @@ This textbook features an **AI chatbot** that can answer your questions! Simply:
 2. Click the **"Ask AI"** button
 3. Get instant, contextual explanations
 
+### ✨ New Features
+- **🎙️ Voice Mode**: Click the microphone to talk to the AI!
+- **🤖 Digital Twin**: Try the [Interactive 3D Robot](/docs/module-2-gazebo/digital-twin-demo) in Module 2.
+
 ## 🚀 Getting Started
 
 Ready to begin? Start with [Module 1: ROS 2 Introduction](/docs/module-1-ros2/intro) to learn the foundation of modern robotics.

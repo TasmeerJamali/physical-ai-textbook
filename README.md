@@ -15,6 +15,8 @@ An **AI-Native Textbook** for learning Physical AI and Humanoid Robotics, built 
 - ✅ **Personalization** (+50) - Adapt content to your level
 - ✅ **Urdu Translation** (+50) - اردو میں ترجمہ
 - ✅ **Reusable Intelligence** (+50) - Skills & Subagents
+- 🎙️ **Voice Interaction** (Out of Box) - Talk to your textbook!
+- 🤖 **Interactive Digital Twin** (Out of Box) - 3D Robot Simulation in browser
 
 ## 📚 Modules
 
