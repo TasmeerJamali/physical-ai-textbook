@@ -1,4 +1,4 @@
-import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
+import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 
 const sidebars: SidebarsConfig = {
   textbookSidebar: [
@@ -26,6 +26,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'module-2-gazebo/intro',
         'module-2-gazebo/setup',
+        'module-2-gazebo/digital-twin-demo',
       ],
     },
     {
